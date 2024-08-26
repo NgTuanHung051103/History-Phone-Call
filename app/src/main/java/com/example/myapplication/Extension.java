@@ -1,4 +1,6 @@
 package com.example.myapplication;
+import android.provider.CallLog;
+
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
@@ -24,6 +26,23 @@ public class Extension {
             SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
             return dateFormat.format(callTime.getTime());
         }
+    }
+
+    public static String formatCallType(String callType){
+        int callTypeCode = Integer.parseInt(callType);
+
+        switch (callTypeCode) {
+            case CallLog.Calls.OUTGOING_TYPE:
+                callType = "Outgoing";
+                break;
+            case CallLog.Calls.INCOMING_TYPE:
+                callType = "Incoming";
+                break;
+            case CallLog.Calls.MISSED_TYPE:
+                callType = "Missed";
+                break;
+        }
+        return callType;
     }
 
     private static boolean isSameDay(Calendar callTime, Calendar now) {

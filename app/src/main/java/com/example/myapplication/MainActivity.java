@@ -6,12 +6,12 @@ import android.Manifest;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.provider.CallLog;
-import android.telecom.Call;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
@@ -25,9 +25,9 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        setContentView(R.layout.layout_call_log);
+//        setContentView(R.layout.layout_call_log);
         _listCallLogs = new ArrayList<CallLogModel>();
-        callLogTextView = findViewById(R.id.call_log_text_view);
+//        callLogTextView = findViewById(R.id.call_log_text_view);
 
         // Kiểm tra quyền
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_CALL_LOG)
@@ -37,9 +37,12 @@ public class MainActivity extends AppCompatActivity {
                     new String[]{Manifest.permission.READ_CALL_LOG},
                     REQUEST_CODE_READ_CALL_LOG);
         } else {
-            // Quyền đã được cấp, lấy lịch sử cuộc gọi
+            callLogAdapter = new CallLogAdapter(this, _listCallLogs);
+            rv_call_logs = findViewById(R.id.activity_main_rv);
+            rv_call_logs.setLayoutManager(new LinearLayoutManager(this));
             getCallLog();
-            bindData();
+            rv_call_logs.setAdapter(callLogAdapter);
+//            bindData();
         }
     }
 
@@ -53,7 +56,7 @@ public class MainActivity extends AppCompatActivity {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 getCallLog();
             } else {
-                callLogTextView.setText("Quyền bị từ chối");
+//                callLogTextView.setText("Quyền bị từ chối");
             }
         }
     }
@@ -64,12 +67,11 @@ public class MainActivity extends AppCompatActivity {
         Cursor cursor = getContentResolver().query(CallLog.Calls.CONTENT_URI, null, null, null, sortOrder);
         _listCallLogs.clear();
 
-        if (cursor != null) {
+            if (cursor != null) {
             int numberIndex = cursor.getColumnIndex(CallLog.Calls.NUMBER);
             int typeIndex = cursor.getColumnIndex(CallLog.Calls.TYPE);
             int dateIndex = cursor.getColumnIndex(CallLog.Calls.DATE);
             int durationIndex = cursor.getColumnIndex(CallLog.Calls.DURATION);
-
 
             while (cursor.moveToNext()) {
                 CallLogModel c = new CallLogModel();
@@ -82,34 +84,9 @@ public class MainActivity extends AppCompatActivity {
             }
             cursor.close();
         }
-    }
-
-    private void bindData(){
-        StringBuilder callLogBuilder = new StringBuilder();
-
-        for(CallLogModel c : _listCallLogs){
-            callLogBuilder.append("Số: ").append(c.getPhNumber())
-                .append("\nLoại cuộc gọi: ").append(formatCallType(c.getCallType()))
-                .append("\nThời gian: ").append(Extension.getFormattedDate(c.getCallDate()))
-                .append("\nThời lượng: ").append(c.getCallDuration()).append(" giây\n\n");
+        // Cập nhật RecyclerView sau khi có dữ liệu
+        if (callLogAdapter != null) {
+            callLogAdapter.notifyDataSetChanged();
         }
-        callLogTextView.setText(callLogBuilder.toString());
-    }
-
-    private String formatCallType(String callType){
-        int callTypeCode = Integer.parseInt(callType);
-
-        switch (callTypeCode) {
-            case CallLog.Calls.OUTGOING_TYPE:
-                callType = "Outgoing";
-                break;
-            case CallLog.Calls.INCOMING_TYPE:
-                callType = "Incoming";
-                break;
-            case CallLog.Calls.MISSED_TYPE:
-                callType = "Missed";
-                break;
-        }
-        return callType;
     }
 }
